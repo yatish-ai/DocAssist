@@ -1,0 +1,114 @@
+Machine Learning Notes – Study Guide
+======================================
+
+Chapter 1: Introduction to Machine Learning
+--------------------------------------------
+Machine learning (ML) is a subset of artificial intelligence that gives computers the ability to learn from data without being explicitly programmed. Instead of writing rules manually, ML systems discover patterns from examples and generalise to new situations.
+
+There are three main paradigms of machine learning:
+1. Supervised Learning – the model learns from labelled training data (input-output pairs).
+2. Unsupervised Learning – the model discovers hidden structure in unlabelled data.
+3. Reinforcement Learning – an agent learns by interacting with an environment and receiving rewards or penalties.
+
+Chapter 2: Gradient Descent and Optimisation
+---------------------------------------------
+Gradient descent is an iterative optimisation algorithm used to minimise a loss function. The core idea is to move in the direction opposite to the gradient, which represents the steepest ascent, to find the function's minimum.
+
+The update rule is:
+    θ = θ − α · ∇L(θ)
+
+where:
+  θ  = model parameters
+  α  = learning rate (step size)
+  ∇L = gradient of the loss with respect to the parameters
+
+Variants of gradient descent:
+- Batch Gradient Descent  – uses the entire dataset per step. Stable but slow.
+- Stochastic Gradient Descent (SGD) – one random sample per step. Fast but noisy.
+- Mini-Batch Gradient Descent – a small batch per step. Best of both worlds.
+
+Adaptive optimisers such as Adam, RMSProp, and Adagrad automatically adjust the learning rate per parameter, leading to faster convergence on most deep-learning tasks.
+
+Chapter 3: Neural Networks
+---------------------------
+A neural network is a computational model loosely inspired by the human brain. It consists of layers of interconnected nodes (neurons):
+
+  Input Layer → Hidden Layer(s) → Output Layer
+
+Each connection has a weight; each neuron applies an activation function to its weighted sum of inputs.
+
+Common activation functions:
+- ReLU (Rectified Linear Unit): f(x) = max(0, x)  – most popular for hidden layers.
+- Sigmoid: f(x) = 1 / (1 + e^{-x})  – squashes output to (0,1); used in binary classification.
+- Softmax: normalises outputs to a probability distribution; used in multi-class output layers.
+- Tanh: output ∈ (−1, 1); often used in recurrent networks.
+
+Training a neural network involves:
+1. Forward pass – compute predictions.
+2. Loss computation – measure error (e.g. cross-entropy, MSE).
+3. Backward pass (backpropagation) – compute gradients via the chain rule.
+4. Parameter update – apply gradient descent step.
+
+Chapter 4: Overfitting and Regularisation
+------------------------------------------
+Overfitting occurs when a model learns the training data too well, capturing noise rather than the true underlying pattern. It results in high training accuracy but poor generalisation.
+
+Indicators of overfitting:
+- Large gap between training and validation loss.
+- Very low training loss but high test loss.
+
+Regularisation techniques to combat overfitting:
+- L2 Regularisation (Weight Decay): adds λ‖θ‖² to the loss, shrinking weights.
+- L1 Regularisation: adds λ‖θ‖₁; encourages sparse weights.
+- Dropout: randomly deactivates neurons during training (common rate: 0.2–0.5).
+- Early Stopping: halt training when validation loss stops improving.
+- Data Augmentation: artificially expand the training set (flips, crops, noise).
+
+Chapter 5: Evaluation Metrics
+-------------------------------
+Choosing the right evaluation metric depends on the task.
+
+Classification metrics:
+- Accuracy: (TP + TN) / Total  – misleading for imbalanced datasets.
+- Precision: TP / (TP + FP)  – fraction of positive predictions that are correct.
+- Recall (Sensitivity): TP / (TP + FN)  – fraction of actual positives caught.
+- F1 Score: 2 × (Precision × Recall) / (Precision + Recall)  – harmonic mean.
+- ROC-AUC: area under the Receiver Operating Characteristic curve.
+
+Regression metrics:
+- Mean Squared Error (MSE): average squared difference between predictions and targets.
+- Root MSE (RMSE): square root of MSE; same units as the target variable.
+- Mean Absolute Error (MAE): average absolute difference; more robust to outliers.
+- R² Score: proportion of variance explained by the model.
+
+Chapter 6: Transformer Architecture
+-------------------------------------
+The Transformer, introduced by Vaswani et al. (2017) in "Attention Is All You Need," is now the dominant architecture for NLP tasks and is rapidly expanding into vision and multimodal AI.
+
+Key components:
+1. Self-Attention Mechanism: each token attends to every other token in the sequence, computing weighted sums based on query-key similarity.
+2. Multi-Head Attention: runs multiple attention operations in parallel and concatenates results, capturing different relationship types.
+3. Positional Encoding: since Transformers lack recurrence, positional information is injected via sinusoidal embeddings.
+4. Feed-Forward Layers: a two-layer MLP applied independently to each position.
+5. Layer Normalisation: normalises activations for stable training.
+
+Notable Transformer-based models:
+- BERT (Bidirectional Encoder): pre-trained on masked language modelling; excellent for classification and NER.
+- GPT series: autoregressive decoder; pre-trained for next-token prediction; state-of-the-art in text generation.
+- T5: encoder-decoder; frames all NLP tasks as text-to-text.
+- ViT (Vision Transformer): applies the Transformer to image patches for computer vision.
+
+Retrieval-Augmented Generation (RAG)
+--------------------------------------
+RAG is a hybrid architecture that combines the parametric knowledge of a large language model with a non-parametric external knowledge base retrieved at inference time.
+
+How RAG works:
+1. A user query is encoded into a vector embedding.
+2. The embedding is used to search a vector database for relevant document chunks.
+3. Retrieved chunks are appended to the prompt as context.
+4. The LLM generates a grounded answer using the retrieved context.
+
+Benefits of RAG:
+- Reduces hallucinations by grounding the LLM in real documents.
+- Allows knowledge to be updated without retraining the model.
+- Provides citations and transparency.

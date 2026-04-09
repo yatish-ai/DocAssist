@@ -1,0 +1,75 @@
+Global Climate Report 2024 – Executive Summary
+================================================
+Published by: International Environmental Research Institute
+Date: March 2024
+
+Overview
+--------
+This report synthesises the latest climate science findings for policymakers, researchers, and the public. Global average surface temperatures in 2023 reached 1.45°C above pre-industrial levels, making it the warmest year on record since measurements began in 1850. The scientific consensus is clear: human-induced greenhouse gas emissions are the primary driver of observed warming.
+
+Key Findings
+------------
+
+1. Temperature Records
+   • 2023 was the hottest year ever recorded, surpassing the previous record set in 2016.
+   • The global mean temperature anomaly was +1.45°C relative to the 1850–1900 baseline.
+   • Twelve of the thirteen hottest months on record occurred between June 2023 and May 2024.
+
+2. Greenhouse Gas Concentrations
+   • Atmospheric CO₂ reached 421 ppm in 2023, the highest in over 3 million years.
+   • Methane (CH₄) levels are approximately 2.6 times higher than pre-industrial concentrations.
+   • Nitrous oxide (N₂O) has risen 24% above pre-industrial levels.
+
+3. Ocean Changes
+   • Global mean sea level has risen ~20 cm since 1900, with the rate accelerating to 4.5 mm/year.
+   • Ocean heat content reached record highs in all measured layers.
+   • Ocean acidification has increased by ~26% (0.1 pH unit drop), threatening marine ecosystems.
+   • Sea surface temperatures in the North Atlantic broke all previous records in 2023.
+
+4. Ice and Cryosphere
+   • Arctic sea ice extent continues to decline at ~13% per decade.
+   • The Greenland and Antarctic ice sheets are losing mass at accelerating rates.
+   • Mountain glacier retreat is observed on every continent.
+
+5. Extreme Weather Events
+   • Heatwaves: frequency has doubled; intensity has increased significantly.
+   • Heavy precipitation: rainfall intensity up ~7% per 1°C of warming (Clausius-Clapeyron).
+   • Tropical cyclones: evidence for increased proportion reaching Category 4–5.
+   • Droughts: compound hot-dry events are more frequent and prolonged.
+
+Projected Scenarios
+-------------------
+Under the IPCC Sixth Assessment Report (AR6) scenarios:
+
+Low-emission scenario (SSP1-2.6):
+  - Warming likely limited to 1.5–2.0°C by 2100.
+  - Sea level rise of 0.3–0.6 m by 2100.
+  - Requires net-zero CO₂ emissions by ~2050.
+
+High-emission scenario (SSP5-8.5):
+  - Warming could reach 3.3–5.7°C by 2100.
+  - Sea level rise of 0.6–1.0 m (or higher with ice-sheet instability).
+  - Irreversible tipping points highly likely (Amazon dieback, West Antarctic Ice Sheet collapse).
+
+Tipping Points
+--------------
+Several Earth system tipping elements may already be approaching critical thresholds:
+- Greenland Ice Sheet: potential irreversible loss at ~1.5°C sustained warming.
+- West Antarctic Ice Sheet: marine ice-sheet instability may be triggered at ~2°C.
+- Amazon Rainforest: dieback possible if deforestation exceeds 20–25% (currently ~17%).
+- Atlantic Meridional Overturning Circulation (AMOC): risk of weakening significantly.
+- Arctic Sea Ice: summer ice-free conditions possible before 2040.
+- Permafrost thaw: releases additional CH₄ and CO₂, creating a positive feedback loop.
+
+Policy Recommendations
+-----------------------
+1. Rapid Decarbonisation: achieve net-zero CO₂ emissions globally by mid-century.
+2. Methane Reduction: cut methane emissions 30% by 2030 (Global Methane Pledge).
+3. Nature-Based Solutions: halt deforestation; restore 30% of degraded land and ocean.
+4. Adaptation Investment: increase adaptation finance to at least $300 billion/year by 2030.
+5. Just Transition: support vulnerable nations and communities in climate transition.
+6. Technology Deployment: accelerate renewable energy, green hydrogen, and carbon capture.
+
+Conclusion
+----------
+The window to limit warming to 1.5°C is narrowing rapidly. Current nationally determined contributions (NDCs) are insufficient and put the world on a path to ~2.5–2.9°C by 2100. Immediate, deep, and sustained emissions reductions across all sectors are essential to avoid the most catastrophic climate impacts. The science is unequivocal: the actions taken this decade will shape the climate trajectory for centuries.
