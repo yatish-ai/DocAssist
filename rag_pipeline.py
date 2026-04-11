@@ -70,9 +70,16 @@ def _call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 1024) -> s
     """
     import requests
 
+    # Validate API key
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         raise RuntimeError("GROQ_API_KEY environment variable not set")
+
+    # Ensure prompts are not empty
+    if not system_prompt or system_prompt.strip() == "":
+        system_prompt = "You are a helpful assistant."
+    if not user_prompt or user_prompt.strip() == "":
+        raise ValueError("user_prompt cannot be empty")
 
     try:
         response = requests.post(
@@ -88,11 +95,19 @@ def _call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 1024) -> s
                     {"role": "user", "content": user_prompt}
                 ],
                 "max_tokens": max_tokens
-            }
+            },
+            timeout=30
         )
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"].strip()
+    except requests.exceptions.RequestException as exc:
+        error_text = ""
+        if hasattr(exc.response, 'text') if exc.response else None:
+            error_text = f"\nResponse: {exc.response.text}"
+        logger.error(f"Groq API request failed: {exc}{error_text}")
+        raise RuntimeError(f"LLM call failed: {exc}{error_text}") from exc
     except Exception as exc:
+        logger.error(f"Unexpected error in LLM call: {exc}")
         raise RuntimeError(f"LLM call failed: {exc}") from exc
 
 
@@ -108,9 +123,16 @@ def _call_llm_stream(system_prompt: str, user_prompt: str, max_tokens: int = 102
     """
     import requests
 
+    # Validate API key
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         raise RuntimeError("GROQ_API_KEY environment variable not set")
+
+    # Ensure prompts are not empty
+    if not system_prompt or system_prompt.strip() == "":
+        system_prompt = "You are a helpful assistant."
+    if not user_prompt or user_prompt.strip() == "":
+        raise ValueError("user_prompt cannot be empty")
 
     try:
         response = requests.post(
@@ -128,7 +150,8 @@ def _call_llm_stream(system_prompt: str, user_prompt: str, max_tokens: int = 102
                 "max_tokens": max_tokens,
                 "stream": True
             },
-            stream=True
+            stream=True,
+            timeout=30
         )
         response.raise_for_status()
 
@@ -145,7 +168,14 @@ def _call_llm_stream(system_prompt: str, user_prompt: str, max_tokens: int = 102
                             yield chunk["choices"][0]["delta"]["content"]
                     except json.JSONDecodeError:
                         continue
+    except requests.exceptions.RequestException as exc:
+        error_text = ""
+        if hasattr(exc.response, 'text') if exc.response else None:
+            error_text = f"\nResponse: {exc.response.text}"
+        logger.error(f"Groq API streaming request failed: {exc}{error_text}")
+        raise RuntimeError(f"LLM streaming call failed: {exc}{error_text}") from exc
     except Exception as exc:
+        logger.error(f"Unexpected error in LLM streaming call: {exc}")
         raise RuntimeError(f"LLM streaming call failed: {exc}") from exc
 
 
