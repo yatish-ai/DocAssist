@@ -117,9 +117,9 @@
                                                     │
                                                     ▼
                                          ┌──────────────────────┐
-                                         │  OLLAMA LOCAL         │
-                                         │  llama3               │
-                                         │  (LLM generation)     │
+                                         │  GROQ API              │
+                                         │  llama3-8b-8192        │
+                                         │  (LLM generation)      │
                                          └──────────────────────┘
 ```
 
@@ -152,7 +152,7 @@
 | UI | [Streamlit](https://streamlit.io) with streaming placeholders |
 | Embeddings | [SentenceTransformers](https://www.sbert.net) – `all-MiniLM-L6-v2` with LRU caching |
 | Vector DB | [FAISS](https://github.com/facebookresearch/faiss) – CPU build with MMR & persistence |
-| LLM | [Ollama](https://ollama.ai) – `llama3` with streaming API |
+| LLM | [Groq API](https://groq.com) – `llama3-8b-8192` with streaming API |
 | Document Processing | pypdf, python-docx, text parsing |
 | Memory Management | Automatic conversation summarization |
 | Citation Analysis | Sequence matching for answer highlighting |
@@ -186,36 +186,26 @@ docassist/
 
 ### Prerequisites
 - Python 3.9 or higher
-- **Ollama** installed → [ollama.ai](https://ollama.ai)
+- **Groq API key** → Get one at [groq.com](https://groq.com)
 
-### 1 – Install Ollama
+### 1 – Get Groq API Key
 
-Follow the instructions at [ollama.ai](https://ollama.ai) to install Ollama for your platform.
-
-### 2 – Start Ollama server
-
-In a separate terminal, start the Ollama server:
+1. Sign up at [groq.com](https://groq.com)
+2. Generate an API key from your dashboard
+3. Set the environment variable:
 
 ```bash
-ollama serve
+export GROQ_API_KEY="your-api-key-here"
 ```
 
-The server will run on `http://localhost:11434`.
-
-### 3 – Pull the Llama3 model
-
-```bash
-ollama pull llama3
-```
-
-### 4 – Clone / download the project
+### 2 – Clone / download the project
 
 ```bash
 git clone https://github.com/your-username/docassist.git
 cd docassist
 ```
 
-### 4 – Create a virtual environment (recommended)
+### 3 – Create a virtual environment (recommended)
 
 ```bash
 python -m venv .venv
@@ -255,7 +245,7 @@ All tunable constants are at the top of each module:
 | `rag_pipeline.py` | `DEFAULT_CHUNK_SIZE` | 400 | Words per chunk |
 | `rag_pipeline.py` | `DEFAULT_CHUNK_OVERLAP` | 60 | Overlap words |
 | `rag_pipeline.py` | `DEFAULT_TOP_K` | 5 | Chunks retrieved |
-| `rag_pipeline.py` | `LLM_MODEL` | `llama3` | Local Ollama model |
+| `rag_pipeline.py` | `GROQ_API_KEY` | env var | Groq API key for llama3-8b-8192 model |
 | `rag_pipeline.py` | `MMR_CANDIDATES` | 20 | Candidates for MMR selection |
 | `rag_pipeline.py` | `MMR_LAMBDA` | 0.7 | MMR relevance vs diversity balance |
 | `rag_pipeline.py` | `MAX_HISTORY_TURNS` | 10 | Conversation turns before summarization |
@@ -314,7 +304,7 @@ Long conversations are automatically summarized to prevent context overflow, whi
 
 | Issue | Solution |
 |-------|----------|
-| `Ollama not running` | Start Ollama and ensure llama3 is pulled |
+| `GROQ_API_KEY not set` | Set the GROQ_API_KEY environment variable |
 | `faiss-cpu` install fails | Try `pip install faiss-cpu --no-cache-dir` |
 | PDF text is empty | Some scanned PDFs need OCR; try `pytesseract` |
 | Slow first run | Model download (~90 MB) happens once; subsequent runs are fast |
@@ -322,4 +312,4 @@ Long conversations are automatically summarized to prevent context overflow, whi
 
 ---
 
-*Built with ❤️ using Ollama, FAISS, SentenceTransformers, and Streamlit.*
+*Built with ❤️ using Groq API, FAISS, SentenceTransformers, and Streamlit.*

@@ -9,14 +9,13 @@ Orchestrates the full Retrieval-Augmented Generation (RAG) pipeline:
 
 LLM Backend
 -----------
-The system calls the local Ollama model (llama3) by default.
-You can swap it for any other Ollama model by changing `_call_llm`.
-Ensure Ollama is installed and the model is pulled:
-    ollama pull llama3
+The system calls the Groq API (llama3-8b-8192 model).
+Set the GROQ_API_KEY environment variable with your API key.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import textwrap
@@ -36,7 +35,6 @@ DEFAULT_CHUNK_SIZE    = 400   # words per chunk
 DEFAULT_CHUNK_OVERLAP = 60    # overlap words
 DEFAULT_TOP_K         = 5     # chunks retrieved per query
 MAX_CONTEXT_CHARS     = 6000  # hard cap on context sent to LLM
-LLM_MODEL             = "llama3"   # local Ollama model
 
 # How many results to retrieve from FAISS before applying MMR
 MMR_CANDIDATES        = 20
@@ -63,59 +61,44 @@ SUMMARY_HISTORY_PROMPT = textwrap.dedent("""
 # LLM caller
 # ─────────────────────────────────────────────────────────────────────────────
 
-def check_ollama_running() -> bool:
-    """
-    Check if Ollama server is running and accessible.
-
-    Returns:
-        bool: True if Ollama is running, False otherwise.
-    """
-    try:
-        import requests
-        response = requests.get("http://localhost:11434/api/version", timeout=5)
-        return response.status_code == 200
-    except Exception:
-        return False
-
-
 def _call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 1024) -> str:
     """
-    Send a prompt to the local Ollama model and return the text response.
+    Send a prompt to the Groq API and return the text response.
 
     Raises:
         RuntimeError if the call fails.
     """
-    # Check if Ollama is running first
-    if not check_ollama_running():
-        raise RuntimeError(
-            "Ollama server is not running. Please start Ollama and ensure llama3 model is available:\n"
-            "1. Install Ollama: https://ollama.ai\n"
-            "2. Start Ollama: ollama serve\n"
-            "3. Pull model: ollama pull llama3"
-        )
+    import requests
+
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise RuntimeError("GROQ_API_KEY environment variable not set")
 
     try:
-        import ollama
-        response = ollama.chat(
-            model=LLM_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            options={"num_predict": max_tokens}
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama3-8b-8192",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                "max_tokens": max_tokens
+            }
         )
-        return response["message"]["content"].strip()
-    except ImportError as exc:
-        raise ImportError(
-            "ollama SDK not installed. Run: pip install ollama"
-        ) from exc
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"].strip()
     except Exception as exc:
         raise RuntimeError(f"LLM call failed: {exc}") from exc
 
 
 def _call_llm_stream(system_prompt: str, user_prompt: str, max_tokens: int = 1024):
     """
-    Send a prompt to the local Ollama model and yield streaming text response.
+    Send a prompt to the Groq API and yield streaming text response.
 
     Yields:
         str: Incremental chunks of the response text.
@@ -123,33 +106,45 @@ def _call_llm_stream(system_prompt: str, user_prompt: str, max_tokens: int = 102
     Raises:
         RuntimeError if the call fails.
     """
-    # Check if Ollama is running first
-    if not check_ollama_running():
-        raise RuntimeError(
-            "Ollama server is not running. Please start Ollama and ensure llama3 model is available:\n"
-            "1. Install Ollama: https://ollama.ai\n"
-            "2. Start Ollama: ollama serve\n"
-            "3. Pull model: ollama pull llama3"
-        )
+    import requests
+
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise RuntimeError("GROQ_API_KEY environment variable not set")
 
     try:
-        import ollama
-        stream = ollama.chat(
-            model=LLM_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            options={"num_predict": max_tokens},
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama3-8b-8192",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                "max_tokens": max_tokens,
+                "stream": True
+            },
             stream=True
         )
-        for chunk in stream:
-            if chunk and chunk.get("message", {}).get("content"):
-                yield chunk["message"]["content"]
-    except ImportError as exc:
-        raise ImportError(
-            "ollama SDK not installed. Run: pip install ollama"
-        ) from exc
+        response.raise_for_status()
+
+        for line in response.iter_lines():
+            if line:
+                line = line.decode('utf-8')
+                if line.startswith('data: '):
+                    data = line[6:]
+                    if data == '[DONE]':
+                        break
+                    try:
+                        chunk = json.loads(data)
+                        if chunk.get("choices") and chunk["choices"][0].get("delta", {}).get("content"):
+                            yield chunk["choices"][0]["delta"]["content"]
+                    except json.JSONDecodeError:
+                        continue
     except Exception as exc:
         raise RuntimeError(f"LLM streaming call failed: {exc}") from exc
 

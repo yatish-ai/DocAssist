@@ -7,7 +7,7 @@
 streamlit>=1.32.0
 
 # ── LLM / AI ───────────────────────────────────────────────────────────────
-ollama                              # Local Ollama API client
+# ollama                              # Local Ollama API client (removed for deployment)
 langchain                           # LangChain for LLM integration
 
 # ── Embeddings ─────────────────────────────────────────────────────────────
@@ -23,4 +23,4 @@ python-docx>=1.1.0                  # Word document parser
 
 # ── Utilities ──────────────────────────────────────────────────────────────
 numpy>=1.24.0
-requests>=2.25.0                    # HTTP requests for Ollama connectivity check
+requests>=2.25.0                    # HTTP requests for Groq API

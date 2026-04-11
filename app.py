@@ -7,7 +7,8 @@ Streamlit web interface.
 Run:
     streamlit run app.py
 
-The system uses Ollama with Llama3 locally for question answering.
+The system uses Groq API with Llama3-8B model for question answering.
+Set GROQ_API_KEY environment variable.
 """
 
 from __future__ import annotations
@@ -191,20 +192,16 @@ def render_contexts(contexts: List[str]) -> None:
 with st.sidebar:
     st.markdown("## ⚙️ Settings")
 
-    # ── Ollama Status Check ─────────────────────────────────────────────────
-    from rag_pipeline import check_ollama_running
-    if not check_ollama_running():
+    # ── API Key Check ─────────────────────────────────────────────────
+    if not os.getenv("GROQ_API_KEY"):
         st.error(
-            "🚨 **Ollama Not Running**\n\n"
-            "DocAssist requires Ollama to be running locally.\n\n"
+            "🚨 **GROQ_API_KEY Not Set**\n\n"
+            "DocAssist requires a Groq API key to function.\n\n"
             "**To fix:**\n"
-            "1. Install Ollama: https://ollama.ai\n"
-            "2. Start server: `ollama serve`\n"
-            "3. Pull model: `ollama pull llama3`\n\n"
-            "Then refresh this page."
+            "Set the GROQ_API_KEY environment variable with your Groq API key."
         )
     else:
-        st.success("✅ Ollama is running")
+        st.success("✅ Groq API key configured")
 
     st.divider()
 
