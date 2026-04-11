@@ -102,7 +102,7 @@ def _call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 1024) -> s
         return response.json()["choices"][0]["message"]["content"].strip()
     except requests.exceptions.RequestException as exc:
         error_text = ""
-        if hasattr(exc.response, 'text') if exc.response else None:
+        if exc.response and hasattr(exc.response, 'text'):
             error_text = f"\nResponse: {exc.response.text}"
         logger.error(f"Groq API request failed: {exc}{error_text}")
         raise RuntimeError(f"LLM call failed: {exc}{error_text}") from exc
@@ -132,7 +132,7 @@ def _call_llm_stream(system_prompt: str, user_prompt: str, max_tokens: int = 102
     if not system_prompt or system_prompt.strip() == "":
         system_prompt = "You are a helpful assistant."
     if not user_prompt or user_prompt.strip() == "":
-        raise ValueError("user_prompt cannot be empty")
+        user_prompt = "Hello"
 
     try:
         response = requests.post(
@@ -170,7 +170,7 @@ def _call_llm_stream(system_prompt: str, user_prompt: str, max_tokens: int = 102
                         continue
     except requests.exceptions.RequestException as exc:
         error_text = ""
-        if hasattr(exc.response, 'text') if exc.response else None:
+        if exc.response and hasattr(exc.response, 'text'):
             error_text = f"\nResponse: {exc.response.text}"
         logger.error(f"Groq API streaming request failed: {exc}{error_text}")
         raise RuntimeError(f"LLM streaming call failed: {exc}{error_text}") from exc
