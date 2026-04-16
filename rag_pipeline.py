@@ -81,33 +81,53 @@ def _call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 1024) -> s
     if not user_prompt or user_prompt.strip() == "":
         raise ValueError("user_prompt cannot be empty")
 
+    # Guard: truncate to fit within llama3-8b-8192's 8192-token context window.
+    MAX_INPUT_CHARS = (8192 - max_tokens - 200) * 4
+    if len(user_prompt) > MAX_INPUT_CHARS:
+        logger.warning(
+            "user_prompt truncated from %d to %d chars to fit context window.",
+            len(user_prompt), MAX_INPUT_CHARS,
+        )
+        user_prompt = user_prompt[:MAX_INPUT_CHARS]
+
+    payload = {
+        "model": "llama3-8b-8192",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": user_prompt},
+        ],
+        "max_tokens": max_tokens,
+        "temperature": 0.2,
+    }
+
+    logger.debug("Groq request: model=%s, msg_chars=%d",
+                 payload["model"], sum(len(m["content"]) for m in payload["messages"]))
+
     try:
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            json={
-                "model": "llama3-8b-8192",
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                "max_tokens": max_tokens
-            },
-            timeout=30
+            json=payload,
+            timeout=60,
         )
-        response.raise_for_status()
+        if not response.ok:
+            logger.error("Groq API error %d: %s", response.status_code, response.text)
+            response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"].strip()
     except requests.exceptions.RequestException as exc:
         error_text = ""
-        if exc.response and hasattr(exc.response, 'text'):
-            error_text = f"\nResponse: {exc.response.text}"
-        logger.error(f"Groq API request failed: {exc}{error_text}")
+        if hasattr(exc, "response") and exc.response is not None:
+            try:
+                error_text = f"\nResponse: {exc.response.text}"
+            except Exception:
+                pass
+        logger.error("Groq API request failed: %s%s", exc, error_text)
         raise RuntimeError(f"LLM call failed: {exc}{error_text}") from exc
     except Exception as exc:
-        logger.error(f"Unexpected error in LLM call: {exc}")
+        logger.error("Unexpected error in LLM call: %s", exc)
         raise RuntimeError(f"LLM call failed: {exc}") from exc
 
 
@@ -129,53 +149,97 @@ def _call_llm_stream(system_prompt: str, user_prompt: str, max_tokens: int = 102
         raise RuntimeError("GROQ_API_KEY environment variable not set")
 
     # Ensure prompts are not empty
-    if not system_prompt or system_prompt.strip() == "":
+    if not system_prompt or not system_prompt.strip():
         system_prompt = "You are a helpful assistant."
-    if not user_prompt or user_prompt.strip() == "":
+    if not user_prompt or not user_prompt.strip():
         user_prompt = "Hello"
+
+    # Guard: Groq's llama3-8b-8192 context window is 8192 tokens (~4 chars/token).
+    # Truncate user_prompt if it risks exceeding the limit, leaving room for
+    # max_tokens of output and the system prompt.
+    MAX_INPUT_CHARS = (8192 - max_tokens - 200) * 4  # conservative estimate
+    if len(user_prompt) > MAX_INPUT_CHARS:
+        logger.warning(
+            "user_prompt truncated from %d to %d chars to fit context window.",
+            len(user_prompt), MAX_INPUT_CHARS,
+        )
+        user_prompt = user_prompt[:MAX_INPUT_CHARS]
+
+    payload = {
+        "model": "llama3-8b-8192",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": user_prompt},
+        ],
+        "max_tokens": max_tokens,
+        "temperature": 0.2,
+        "stream": True,
+    }
+
+    logger.debug("Groq streaming request payload (truncated): model=%s, msg_chars=%d",
+                 payload["model"], sum(len(m["content"]) for m in payload["messages"]))
 
     try:
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            json={
-                "model": "llama3-8b-8192",
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                "max_tokens": max_tokens,
-                "stream": True
-            },
+            json=payload,
             stream=True,
-            timeout=30
+            timeout=60,
         )
-        response.raise_for_status()
+
+        # Read the full error body before raise_for_status so we can log it.
+        if not response.ok:
+            error_body = response.text  # safe to read; stream not yet iterated
+            logger.error(
+                "Groq API error %d: %s", response.status_code, error_body
+            )
+            raise RuntimeError(
+                f"LLM streaming call failed: {response.status_code} "
+                f"{response.reason}\nResponse: {error_body}"
+            )
 
         for line in response.iter_lines():
-            if line:
-                line = line.decode('utf-8')
-                if line.startswith('data: '):
-                    data = line[6:]
-                    if data == '[DONE]':
-                        break
-                    try:
-                        chunk = json.loads(data)
-                        if chunk.get("choices") and chunk["choices"][0].get("delta", {}).get("content"):
-                            yield chunk["choices"][0]["delta"]["content"]
-                    except json.JSONDecodeError:
-                        continue
+            if not line:
+                continue
+            # iter_lines() may return bytes or str depending on requests version
+            if isinstance(line, bytes):
+                line = line.decode("utf-8")
+            if line.startswith("data: "):
+                data = line[6:].strip()
+                if data == "[DONE]":
+                    break
+                try:
+                    chunk = json.loads(data)
+                    delta_content = (
+                        chunk.get("choices", [{}])[0]
+                             .get("delta", {})
+                             .get("content")
+                    )
+                    if delta_content:
+                        yield delta_content
+                except json.JSONDecodeError:
+                    logger.warning("Could not parse SSE chunk: %s", data)
+                    continue
+
+    except RuntimeError:
+        raise  # already formatted above
     except requests.exceptions.RequestException as exc:
+        # For non-2xx errors raised by raise_for_status (shouldn't reach here
+        # now, but kept as a safety net).
         error_text = ""
-        if exc.response and hasattr(exc.response, 'text'):
-            error_text = f"\nResponse: {exc.response.text}"
-        logger.error(f"Groq API streaming request failed: {exc}{error_text}")
+        if hasattr(exc, "response") and exc.response is not None:
+            try:
+                error_text = f"\nResponse: {exc.response.text}"
+            except Exception:
+                pass
+        logger.error("Groq API streaming request failed: %s%s", exc, error_text)
         raise RuntimeError(f"LLM streaming call failed: {exc}{error_text}") from exc
     except Exception as exc:
-        logger.error(f"Unexpected error in LLM streaming call: {exc}")
+        logger.error("Unexpected error in LLM streaming call: %s", exc)
         raise RuntimeError(f"LLM streaming call failed: {exc}") from exc
 
 
